@@ -41,7 +41,7 @@
   .card-spread > .card{flex:1 1 0;min-width:0;background:transparent;box-shadow:none;border-radius:0}
   .card-spread > .card::before{display:none}
   .forms-col{flex:1 1 360px;min-width:0;max-width:440px}
-  @media(max-width:880px){.card-spread{flex-direction:column;align-items:center}.card-spread > .card{max-width:380px;width:100%}}
+  @media(max-width:880px){.card-stage{overflow:hidden}.card-spread{flex-direction:row;align-items:stretch}#cardSpread{transform-origin:top left}}
 
   /* agenda page */
   .card.agenda{justify-content:flex-start}
@@ -58,7 +58,6 @@
   .ag-note{font-size:10.5px;color:#8090ad;text-align:center;margin-top:12px;font-style:italic}
   .card{
     position:relative;
-    aspect-ratio:5/7;
     width:100%;
     border-radius:18px;
     overflow:hidden;
@@ -308,22 +307,51 @@
   downloadBtn.addEventListener('click', () => {
     downloadBtn.disabled = true;
     downloadBtn.textContent = 'Đang tạo ảnh...';
-    html2canvas(document.getElementById('cardSpread'), {scale:2, backgroundColor:'#ffffff', useCORS:true})
+    var __sp=document.getElementById('cardSpread');
+    var __pt=__sp.style.transform, __pw=__sp.style.width;
+    __sp.style.transform='none'; __sp.style.width='720px';
+    html2canvas(__sp, {scale:2, backgroundColor:'#ffffff', useCORS:true})
       .then(canvas => {
         const link = document.createElement('a');
         const safe = (nameInput.value.trim() || 'thiep').replace(/\s+/g,'-');
         link.download = 'Thiep-moi-' + safe + '.png';
         link.href = canvas.toDataURL('image/png');
         link.click();
+        __sp.style.transform=__pt; __sp.style.width=__pw; if(window.__fitSpread)window.__fitSpread();
         downloadBtn.textContent = '⬇ Tải thiệp về';
         downloadBtn.disabled = false;
       })
       .catch(() => {
+        __sp.style.transform=__pt; __sp.style.width=__pw; if(window.__fitSpread)window.__fitSpread();
         downloadBtn.textContent = '⬇ Tải thiệp về';
         downloadBtn.disabled = false;
         alert('Có lỗi khi tạo ảnh, vui lòng thử lại.');
       });
   });
+
+
+  /* ===== mobile: keep landscape spread, scale to fit width ===== */
+  (function(){
+    var DESIGN=720;
+    var stage=document.querySelector('.card-stage');
+    var spread=document.getElementById('cardSpread');
+    function fit(){
+      if(!stage||!spread) return;
+      spread.style.transform='none'; spread.style.width=''; stage.style.height='';
+      var avail=stage.clientWidth;
+      if(avail<DESIGN){
+        spread.style.width=DESIGN+'px';
+        var s=avail/DESIGN;
+        spread.style.transformOrigin='top left';
+        spread.style.transform='scale('+s+')';
+        stage.style.height=Math.ceil(spread.offsetHeight*s)+'px';
+      }
+    }
+    window.__fitSpread=fit;
+    window.addEventListener('resize',fit);
+    window.addEventListener('load',fit);
+    fit();
+  })();
 
 </script>
 </body>
